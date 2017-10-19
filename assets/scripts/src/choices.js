@@ -1015,23 +1015,39 @@ class Choices {
     const firstChoiceId = existingChoices ? existingChoices.length + 1 : 1;
 
     const getChoiceElementId = choiceIndex => `${this.baseId}-${this.idNames.itemChoice}-${choiceIndex}`;
+    const createAddChoiceAction = (choice, idx) => addChoice(
+      choice.value,
+      choice.label || choice.value,
+      firstChoiceId + idx,
+      choice.groupId || -1,
+      choice.isDisabled,
+      getChoiceElementId(firstChoiceId + idx),
+      choice.customProperties,
+      choice.placeholder || false,
+      choice.keyCode || false,
+    );
 
-    this.store.dispatch(choices.map((choice, idx) => {
-      const choiceLabel = choice.label || choice.value;
-      const choiceId = getChoiceElementId(firstChoiceId + idx);
+    const addSelectedChoiceAsItem = (choice, idx) => this._addItem(
+      choice.value,
+      choice.label || choice.value,
+      getChoiceElementId(firstChoiceId + idx),
+      undefined,
+      choice.customProperties,
+      choice.placeholder,
+      choice.keyCode,
+    );
 
-      return addChoice(
-        choice.value,
-        choiceLabel,
-        firstChoiceId + idx,
-        choice.groupId || -1,
-        choice.isDisabled,
-        choiceId,
-        choice.customProperties,
-        choice.placeholder || false,
-        choice.keyCode || false,
-      );
-    }));
+    const toDispatch = [];
+
+    choices.forEach((choice, idx) => {
+      toDispatch.push(createAddChoiceAction(choice, idx));
+
+      if (choice.selected) {
+        addSelectedChoiceAsItem(choice, idx);
+      }
+    });
+
+    this.store.dispatch(toDispatch);
   }
 
   /**
