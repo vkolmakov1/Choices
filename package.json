@@ -65,6 +65,7 @@
     "wrapper-webpack-plugin": "^0.1.7"
   },
   "dependencies": {
+    "@manaflair/redux-batch": "^0.1.0",
     "classnames": "^2.2.5",
     "fuse.js": "^2.2.2",
     "redux": "^3.3.1"

@@ -1,10 +1,12 @@
 import { createStore } from 'redux';
+import { reduxBatch } from '@manaflair/redux-batch';
 import rootReducer from './../reducers/index';
 
 export default class Store {
   constructor() {
     this.store = createStore(
       rootReducer,
+      reduxBatch,
       window.devToolsExtension ?
         window.devToolsExtension() :
         undefined,
