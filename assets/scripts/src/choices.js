@@ -992,29 +992,46 @@ class Choices {
     // Add choices if passed
     if (choices && choices.length) {
       this.containerOuter.classList.remove(this.config.classNames.loadingState);
-      choices.forEach((result) => {
-        if (result.choices) {
-          this._addGroup(
-            result,
-            (result.id || null),
-            value,
-            label,
-          );
-        } else {
-          this._addChoice(
-            result[value],
-            result[label],
-            result.selected,
-            result.disabled,
-            undefined,
-            result.customProperties,
-            result.placeholder,
-          );
-        }
-      });
+
+      const groups = choices.filter(result => result.choices);
+      const individualChoices = choices.filter(result => !result.choices);
+
+      groups.forEach(group => this._addGroup(group, (group.id || null), group.value, group.label));
+
+      this._addMultipleIndividualChoices(individualChoices);
     }
 
     return this;
+  }
+
+  /**
+   * Add multiple individual choices at once
+   * @param {Array} choices Choices to add
+   * @return
+   * @private
+   */
+  _addMultipleIndividualChoices(choices) {
+    const existingChoices = this.store.getChoices();
+    const firstChoiceId = existingChoices ? existingChoices.length + 1 : 1;
+
+    const getChoiceElementId = choiceIndex => `${this.baseId}-${this.idNames.itemChoice}-${choiceIndex}`;
+
+    this.store.dispatch(choices.map((choice, idx) => {
+      const choiceLabel = choice.label || choice.value;
+      const choiceId = getChoiceElementId(firstChoiceId + idx);
+
+      return addChoice(
+        choice.value,
+        choiceLabel,
+        firstChoiceId + idx,
+        choice.groupId || -1,
+        choice.isDisabled,
+        choiceId,
+        choice.customProperties,
+        choice.placeholder || false,
+        choice.keyCode || false,
+      );
+    }));
   }
 
   /**
