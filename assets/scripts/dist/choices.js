@@ -2845,13 +2845,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          // Create array of options from option elements
 	          passedOptions.forEach(function (o) {
-	            allChoices.push({
-	              value: o.value,
-	              label: o.innerHTML,
-	              selected: o.selected,
-	              disabled: o.disabled || o.parentNode.disabled,
-	              placeholder: o.hasAttribute('placeholder')
+	            var allChoicesContainPassedOption = allChoices.some(function (choice) {
+	              return choice.value === o.value;
 	            });
+	            if (!allChoicesContainPassedOption) {
+	              allChoices.push({
+	                value: o.value,
+	                label: o.innerHTML,
+	                selected: o.selected,
+	                disabled: o.disabled || o.parentNode.disabled,
+	                placeholder: o.hasAttribute('placeholder')
+	              });
+	            }
 	          });
 
 	          // If sorting is enabled or the user is searching, filter choices

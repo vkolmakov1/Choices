@@ -2824,13 +2824,16 @@ class Choices {
 
         // Create array of options from option elements
         passedOptions.forEach((o) => {
-          allChoices.push({
-            value: o.value,
-            label: o.innerHTML,
-            selected: o.selected,
-            disabled: o.disabled || o.parentNode.disabled,
-            placeholder: o.hasAttribute('placeholder'),
-          });
+          const allChoicesContainPassedOption = allChoices.some(choice => choice.value === o.value);
+          if (!allChoicesContainPassedOption) {
+            allChoices.push({
+              value: o.value,
+              label: o.innerHTML,
+              selected: o.selected,
+              disabled: o.disabled || o.parentNode.disabled,
+              placeholder: o.hasAttribute('placeholder'),
+            });
+          }
         });
 
         // If sorting is enabled or the user is searching, filter choices
