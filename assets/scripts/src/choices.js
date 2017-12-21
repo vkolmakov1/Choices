@@ -118,6 +118,7 @@ class Choices {
       },
       fuseOptions: {
         include: 'score',
+        maxPatternLength: 32,
       },
       callbackOnInit: null,
       callbackOnCreateTemplates: null,
@@ -1500,7 +1501,10 @@ class Choices {
    * @private
    */
   _searchChoices(value) {
-    const newValue = isType('String', value) ? value.trim() : value;
+    let newValue = isType('String', value) ? value.trim() : value;
+    if (newValue.length > this.config.fuseOptions.maxPatternLength) {
+      newValue = newValue.substring(0, this.config.fuseOptions.maxPatternLength);
+    }
     const currentValue = isType('String', this.currentValue) ? this.currentValue.trim() : this.currentValue;
 
     // If new value matches the desired length and is not the same as the current value with a space
@@ -2683,6 +2687,7 @@ class Choices {
           globalClasses.input,
           globalClasses.inputCloned,
         );
+        const maxLength = this.isSelectOneElement ? `maxlength="${this.config.fuseOptions.maxPatternLength}"` : '';
 
         return strToEl(`
           <input
@@ -2693,6 +2698,7 @@ class Choices {
             spellcheck="false"
             role="textbox"
             aria-autocomplete="list"
+            ${maxLength}
             >
         `);
       },

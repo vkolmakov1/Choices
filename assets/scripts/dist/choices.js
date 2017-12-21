@@ -185,7 +185,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        noChoices: 'has-no-choices'
 	      },
 	      fuseOptions: {
-	        include: 'score'
+	        include: 'score',
+	        maxPatternLength: 32
 	      },
 	      callbackOnInit: null,
 	      callbackOnCreateTemplates: null
@@ -1640,6 +1641,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_searchChoices',
 	    value: function _searchChoices(value) {
 	      var newValue = (0, _utils.isType)('String', value) ? value.trim() : value;
+	      if (newValue.length > this.config.fuseOptions.maxPatternLength) {
+	        newValue = newValue.substring(0, this.config.fuseOptions.maxPatternLength);
+	      }
 	      var currentValue = (0, _utils.isType)('String', this.currentValue) ? this.currentValue.trim() : this.currentValue;
 
 	      // If new value matches the desired length and is not the same as the current value with a space
@@ -2726,8 +2730,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        input: function input() {
 	          var localClasses = (0, _classnames2.default)(globalClasses.input, globalClasses.inputCloned);
+	          var maxLength = _this23.isSelectOneElement ? 'maxlength="' + _this23.config.fuseOptions.maxPatternLength + '"' : '';
 
-	          return (0, _utils.strToEl)('\n          <input\n            type="text"\n            class="' + localClasses + '"\n            autocomplete="off"\n            autocapitalize="off"\n            spellcheck="false"\n            role="textbox"\n            aria-autocomplete="list"\n            >\n        ');
+	          return (0, _utils.strToEl)('\n          <input\n            type="text"\n            class="' + localClasses + '"\n            autocomplete="off"\n            autocapitalize="off"\n            spellcheck="false"\n            role="textbox"\n            aria-autocomplete="list"\n            ' + maxLength + '\n            >\n        ');
 	        },
 	        dropdown: function dropdown() {
 	          var localClasses = (0, _classnames2.default)(globalClasses.list, globalClasses.listDropdown);
