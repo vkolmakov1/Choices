@@ -397,8 +397,13 @@ class Choices {
       return acc;
     }, { placeholderChoices: [], normalChoices: [] });
 
-    // If sorting is enabled or the user is searching, filter choices
-    if (this.config.shouldSort || this.isSearching) {
+    // Decide whether or not the choices should be sorted before rendering
+    const shouldBeSortedByFuse = this.config.fuseOptions.shouldSort;
+    const shouldBeSortedWithDefaultSortFilter = this.config.shouldSort;
+    const shouldBeSortedWithActiveSearch = this.isSearching && !shouldBeSortedByFuse;
+    const shouldBeSortedWithoutActiveSearch = !this.isSearching &&
+      shouldBeSortedWithDefaultSortFilter;
+    if (shouldBeSortedWithActiveSearch || shouldBeSortedWithoutActiveSearch) {
       normalChoices.sort(filter);
     }
 

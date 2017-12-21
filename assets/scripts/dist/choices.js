@@ -482,10 +482,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	          placeholderChoices = _rendererableChoices$.placeholderChoices,
 	          normalChoices = _rendererableChoices$.normalChoices;
 
-	      // If sorting is enabled or the user is searching, filter choices
+	      // Decide whether or not the choices should be sorted before rendering
 
 
-	      if (this.config.shouldSort || this.isSearching) {
+	      var shouldBeSortedByFuse = this.config.fuseOptions.shouldSort;
+	      var shouldBeSortedWithDefaultSortFilter = this.config.shouldSort;
+	      var shouldBeSortedWithActiveSearch = this.isSearching && !shouldBeSortedByFuse;
+	      var shouldBeSortedWithoutActiveSearch = !this.isSearching && shouldBeSortedWithDefaultSortFilter;
+	      if (shouldBeSortedWithActiveSearch || shouldBeSortedWithoutActiveSearch) {
 	        normalChoices.sort(filter);
 	      }
 
