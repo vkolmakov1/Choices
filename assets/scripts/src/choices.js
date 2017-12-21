@@ -128,7 +128,7 @@ class Choices {
     };
 
     // Merge options with user options
-    this.config = extend(defaultConfig, userConfig);
+    this.config = extend(defaultConfig, Choices.userDefaults, userConfig);
 
     if (this.config.renderSelectedChoices !== 'auto' && this.config.renderSelectedChoices !== 'always') {
       if (!this.config.silent) {
@@ -759,7 +759,7 @@ class Choices {
     this.dropdown.setAttribute('aria-expanded', 'true');
 
     const dimensions = this.dropdown.getBoundingClientRect();
-    const dropdownPos = Math.ceil(dimensions.top + window.scrollY + this.dropdown.offsetHeight);
+    const dropdownPos = Math.ceil(dimensions.top + window.pageYOffset + this.dropdown.offsetHeight);
 
     // If flip is enabled and the dropdown bottom position is
     // greater than the window height flip the dropdown.
@@ -797,6 +797,10 @@ class Choices {
     this.containerOuter.setAttribute('aria-expanded', 'false');
     this.dropdown.classList.remove(this.config.classNames.activeState);
     this.dropdown.setAttribute('aria-expanded', 'false');
+    // IE11 ignores aria-label and blocks virtual keyboard
+    // if aria-activedescendant is set without a dropdown
+    this.input.removeAttribute('aria-activedescendant');
+    this.containerOuter.removeAttribute('aria-activedescendant');
 
     if (isFlipped) {
       this.containerOuter.classList.remove(this.config.classNames.flippedState);
@@ -988,29 +992,62 @@ class Choices {
     // Add choices if passed
     if (choices && choices.length) {
       this.containerOuter.classList.remove(this.config.classNames.loadingState);
-      choices.forEach((result) => {
-        if (result.choices) {
-          this._addGroup(
-            result,
-            (result.id || null),
-            value,
-            label,
-          );
-        } else {
-          this._addChoice(
-            result[value],
-            result[label],
-            result.selected,
-            result.disabled,
-            undefined,
-            result.customProperties,
-            result.placeholder,
-          );
-        }
-      });
+
+      const groups = choices.filter(result => result.choices);
+      const individualChoices = choices.filter(result => !result.choices);
+
+      groups.forEach(group => this._addGroup(group, (group.id || null), group.value, group.label));
+
+      this._addMultipleIndividualChoices(individualChoices);
     }
 
     return this;
+  }
+
+  /**
+   * Add multiple individual choices at once
+   * @param {Array} choices Choices to add
+   * @return
+   * @private
+   */
+  _addMultipleIndividualChoices(choices) {
+    const existingChoices = this.store.getChoices();
+    const firstChoiceId = existingChoices ? existingChoices.length + 1 : 1;
+
+    const getChoiceElementId = choiceIndex => `${this.baseId}-${this.idNames.itemChoice}-${choiceIndex}`;
+    const createAddChoiceAction = (choice, idx) => addChoice(
+      choice.value,
+      choice.label || choice.value,
+      firstChoiceId + idx,
+      choice.groupId || -1,
+      choice.isDisabled,
+      getChoiceElementId(firstChoiceId + idx),
+      choice.customProperties,
+      choice.placeholder || false,
+      choice.keyCode || false,
+    );
+
+    const addSelectedChoiceAsItem = (choice, idx) => this._addItem(
+      choice.value,
+      choice.label || choice.value,
+      getChoiceElementId(firstChoiceId + idx),
+      undefined,
+      choice.customProperties,
+      choice.placeholder,
+      choice.keyCode,
+    );
+
+    const toDispatch = [];
+
+    choices.forEach((choice, idx) => {
+      toDispatch.push(createAddChoiceAction(choice, idx));
+
+      if (choice.selected) {
+        addSelectedChoiceAsItem(choice, idx);
+      }
+    });
+
+    this.store.dispatch(toDispatch);
   }
 
   /**
@@ -2198,7 +2235,16 @@ class Choices {
       // Highlight given option, and set accessiblity attributes
       passedEl.classList.add(this.config.classNames.highlightedState);
       passedEl.setAttribute('aria-selected', 'true');
-      this.containerOuter.setAttribute('aria-activedescendant', passedEl.id);
+
+      const hasActiveDropdown = this.dropdown.classList.contains(
+        this.config.classNames.activeState,
+      );
+      if (hasActiveDropdown) {
+        // IE11 ignores aria-label and blocks virtual keyboard
+        // if aria-activedescendant is set without a dropdown
+        this.input.setAttribute('aria-activedescendant', passedEl.id);
+        this.containerOuter.setAttribute('aria-activedescendant', passedEl.id);
+      }
     }
   }
 
@@ -2853,5 +2899,7 @@ class Choices {
 
   /* =====  End of Private functions  ====== */
 }
+
+Choices.userDefaults = {};
 
 module.exports = Choices;

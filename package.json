@@ -3,7 +3,7 @@
   "version": "3.0.2",
   "description": "A vanilla JS customisable text input/select box plugin",
   "main": "./assets/scripts/dist/choices.min.js",
-  "types": "index.d.ts",
+  "types": "./index.d.ts",
   "scripts": {
     "start": "node server.js",
     "lint": "eslint assets/**/*.js",
@@ -65,6 +65,7 @@
     "wrapper-webpack-plugin": "^0.1.7"
   },
   "dependencies": {
+    "@manaflair/redux-batch": "^0.1.0",
     "classnames": "^2.2.5",
     "fuse.js": "^2.2.2",
     "redux": "^3.3.1"
