@@ -2831,12 +2831,14 @@ class Choices {
         passedOptions.forEach((o) => {
           const allChoicesContainPassedOption = allChoices.some(choice => choice.value === o.value);
           if (!allChoicesContainPassedOption) {
+            const customProperties = Object.assign({}, o.dataset);
             allChoices.push({
               value: o.value,
               label: o.innerHTML,
               selected: o.selected,
               disabled: o.disabled || o.parentNode.disabled,
               placeholder: o.hasAttribute('placeholder'),
+              customProperties,
             });
           }
         });

@@ -2853,12 +2853,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	              return choice.value === o.value;
 	            });
 	            if (!allChoicesContainPassedOption) {
+	              var customProperties = Object.assign({}, o.dataset);
 	              allChoices.push({
 	                value: o.value,
 	                label: o.innerHTML,
 	                selected: o.selected,
 	                disabled: o.disabled || o.parentNode.disabled,
-	                placeholder: o.hasAttribute('placeholder')
+	                placeholder: o.hasAttribute('placeholder'),
+	                customProperties: customProperties
 	              });
 	            }
 	          });
