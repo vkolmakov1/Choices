@@ -1,4 +1,4 @@
-/*! choices.js v3.0.2 | (c) 2017 Josh Johnson | https://github.com/jshjohnson/Choices#readme */ 
+/*! choices.js v3.0.2 | (c) 2018 Josh Johnson | https://github.com/jshjohnson/Choices#readme */ 
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -382,6 +382,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      // Clear data store
 	      this.clearStore();
+	      this.presetChoices = [];
 
 	      // Nullify instance-specific data
 	      this.config.templates = null;
@@ -581,90 +582,95 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      this.currentState = this.store.getState();
+	      if (!this._inMultipleStoreChanges) {
+	        this.currentState = this.store.getState();
 
-	      // Only render if our state has actually changed
-	      if (this.currentState !== this.prevState) {
-	        // Choices
-	        if (this.currentState.choices !== this.prevState.choices || this.currentState.groups !== this.prevState.groups || this.currentState.items !== this.prevState.items) {
-	          if (this.isSelectElement) {
-	            // Get active groups/choices
-	            var activeGroups = this.store.getGroupsFilteredByActive();
-	            var activeChoices = this.store.getChoicesFilteredByActive();
+	        // Only render if our state has actually changed
+	        if (this.currentState !== this.prevState) {
+	          // Choices
+	          if (this.currentState.choices !== this.prevState.choices || this.currentState.groups !== this.prevState.groups || this.currentState.items !== this.prevState.items) {
+	            if (this.isSelectElement) {
+	              // Get active groups/choices
+	              var activeGroups = this.store.getGroupsFilteredByActive();
+	              var activeChoices = this.store.getChoicesFilteredByActive();
 
-	            var choiceListFragment = document.createDocumentFragment();
+	              var choiceListFragment = document.createDocumentFragment();
 
-	            // Clear choices
-	            this.choiceList.innerHTML = '';
+	              // Clear choices
+	              this.choiceList.innerHTML = '';
 
-	            // Scroll back to top of choices list
-	            if (this.config.resetScrollPosition) {
-	              this.choiceList.scrollTop = 0;
-	            }
-
-	            // If we have grouped options
-	            if (activeGroups.length >= 1 && this.isSearching !== true) {
-	              choiceListFragment = this.renderGroups(activeGroups, activeChoices, choiceListFragment);
-	            } else if (activeChoices.length >= 1) {
-	              choiceListFragment = this.renderChoices(activeChoices, choiceListFragment);
-	            }
-
-	            var activeItems = this.store.getItemsFilteredByActive();
-	            var canAddItem = this._canAddItem(activeItems, this.input.value);
-
-	            // If we have choices to show
-	            if (choiceListFragment.childNodes && choiceListFragment.childNodes.length > 0) {
-	              // ...and we can select them
-	              if (canAddItem.response) {
-	                // ...append them and highlight the first choice
-	                this.choiceList.appendChild(choiceListFragment);
-	                this._highlightChoice();
-	              } else {
-	                // ...otherwise show a notice
-	                this.choiceList.appendChild(this._getTemplate('notice', canAddItem.notice));
-	              }
-	            } else {
-	              // Otherwise show a notice
-	              var dropdownItem = void 0;
-	              var notice = void 0;
-
-	              if (this.isSearching) {
-	                notice = (0, _utils.isType)('Function', this.config.noResultsText) ? this.config.noResultsText() : this.config.noResultsText;
-
-	                dropdownItem = this._getTemplate('notice', notice, 'no-results');
-	              } else {
-	                notice = (0, _utils.isType)('Function', this.config.noChoicesText) ? this.config.noChoicesText() : this.config.noChoicesText;
-
-	                dropdownItem = this._getTemplate('notice', notice, 'no-choices');
+	              // Scroll back to top of choices list
+	              if (this.config.resetScrollPosition) {
+	                this.choiceList.scrollTop = 0;
 	              }
 
-	              this.choiceList.appendChild(dropdownItem);
+	              // If we have grouped options
+	              if (activeGroups.length >= 1 && this.isSearching !== true) {
+	                choiceListFragment = this.renderGroups(activeGroups, activeChoices, choiceListFragment);
+	              } else if (activeChoices.length >= 1) {
+	                choiceListFragment = this.renderChoices(activeChoices, choiceListFragment);
+	              }
+
+	              var activeItems = this.store.getItemsFilteredByActive();
+	              var canAddItem = this._canAddItem(activeItems, this.input.value);
+
+	              // If we have choices to show
+	              if (choiceListFragment.childNodes && choiceListFragment.childNodes.length > 0) {
+	                // ...and we can select them
+	                if (canAddItem.response) {
+	                  // ...append them and highlight the first choice
+	                  this.choiceList.appendChild(choiceListFragment);
+	                  this._highlightChoice();
+	                } else {
+	                  // ...otherwise show a notice
+	                  this.choiceList.appendChild(this._getTemplate('notice', canAddItem.notice));
+	                }
+	              } else {
+	                // Otherwise show a notice
+	                var dropdownItem = void 0;
+	                var notice = void 0;
+
+	                if (this.isSearching) {
+	                  notice = (0, _utils.isType)('Function', this.config.noResultsText) ? this.config.noResultsText() : this.config.noResultsText;
+
+	                  dropdownItem = this._getTemplate('notice', notice, 'no-results');
+	                } else {
+	                  notice = (0, _utils.isType)('Function', this.config.noChoicesText) ? this.config.noChoicesText() : this.config.noChoicesText;
+
+	                  dropdownItem = this._getTemplate('notice', notice, 'no-choices');
+	                }
+
+	                this.choiceList.appendChild(dropdownItem);
+	              }
 	            }
 	          }
-	        }
 
-	        // Items
-	        if (this.currentState.items !== this.prevState.items) {
-	          // Get active items (items that can be selected)
-	          var _activeItems = this.store.getItemsFilteredByActive();
+	          // Items
+	          if (this.currentState.items !== this.prevState.items) {
+	            // Get active items (items that can be selected)
+	            var _activeItems = this.store.getItemsFilteredByActive();
 
-	          // Clear list
-	          this.itemList.innerHTML = '';
+	            // Clear list
+	            this.itemList.innerHTML = '';
 
-	          if (_activeItems && _activeItems) {
-	            // Create a fragment to store our list items
-	            // (so we don't have to update the DOM for each item)
-	            var itemListFragment = this.renderItems(_activeItems);
+	            if (_activeItems && _activeItems) {
+	              // Create a fragment to store our list items
+	              // (so we don't have to update the DOM for each item)
+	              var itemListFragment = this.renderItems(_activeItems);
 
-	            // If we have items to add
-	            if (itemListFragment.childNodes) {
-	              // Update list
-	              this.itemList.appendChild(itemListFragment);
+	              // If we have items to add
+	              if (itemListFragment.childNodes) {
+	                // Update list
+	                this.itemList.appendChild(itemListFragment);
+	              }
 	            }
 	          }
-	        }
 
-	        this.prevState = this.currentState;
+	          this.prevState = this.currentState;
+	          this._storeNeedsRendering = false;
+	        }
+	      } else {
+	        this._storeNeedsRendering = true;
 	      }
 	    }
 
@@ -1018,6 +1024,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	      }
 
+	      this._startMultipleStoreChanges();
+
 	      // Convert args to an iterable array
 	      var values = [].concat(_toConsumableArray(args));
 	      var handleValue = function handleValue(item) {
@@ -1051,6 +1059,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        handleValue(values[0]);
 	      }
 
+	      this._endMultipleStoreChanges();
+
 	      return this;
 	    }
 
@@ -1069,6 +1079,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      if (this.isTextElement) {
 	        return this;
 	      }
+
+	      this._startMultipleStoreChanges();
 
 	      var choices = this.store.getChoices();
 	      // If only one value has been passed, convert to array
@@ -1091,6 +1103,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	          console.warn('Attempting to select choice that does not exist');
 	        }
 	      });
+
+	      this._endMultipleStoreChanges();
+
 	      return this;
 	    }
 
@@ -1178,6 +1193,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 
 	      this.store.dispatch(toDispatch);
+	    }
+
+	    /**
+	     * Starts a process in which multiple store changes are expected, to avoid rendering on each store change
+	     * @return {Object} Class instance
+	     * @private
+	     */
+
+	  }, {
+	    key: '_startMultipleStoreChanges',
+	    value: function _startMultipleStoreChanges() {
+	      this._storeNeedsRendering = false;
+	      this._inMultipleStoreChanges = true;
+	      return this;
+	    }
+
+	    /**
+	     * Ends a process in which multiple store changes are expected, will render if the store requires it
+	     * @return {Object} Class instance
+	     * @private
+	     */
+
+	  }, {
+	    key: '_endMultipleStoreChanges',
+	    value: function _endMultipleStoreChanges() {
+	      this._inMultipleStoreChanges = false;
+	      if (this._storeNeedsRendering) {
+	        this.render();
+	      }
+	      return this;
 	    }
 
 	    /**
@@ -1435,6 +1480,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return;
 	      }
 
+	      this._startMultipleStoreChanges();
+
 	      // If we are clicking on an option
 	      var id = element.getAttribute('data-id');
 	      var choice = this.store.getChoiceById(id);
@@ -1458,6 +1505,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      this.clearInput();
+
+	      this._endMultipleStoreChanges();
 
 	      // We wont to close the dropdown if we are dealing with a single select box
 	      if (hasActiveDropdown && this.isSelectOneElement) {
@@ -2880,22 +2929,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return choice.selected;
 	          });
 
-	          // Add each choice
-	          allChoices.forEach(function (choice, index) {
-	            // Pre-select first choice if it's a single select
-	            if (_this24.isSelectOneElement) {
-	              // If there is a selected choice already or the choice is not
-	              // the first in the array, add each choice normally
-	              // Otherwise pre-select the first choice in the array
-	              var shouldPreselect = !hasSelectedChoice || hasSelectedChoice && index === 0;
-	              var isSelected = shouldPreselect ? true : choice.selected;
-	              var isDisabled = shouldPreselect ? false : choice.disabled;
+	          if (this.isSelectOneElement && !!allChoices[0] && !hasSelectedChoice) {
+	            allChoices[0].selected = true;
+	            allChoices[0].disabled = false;
+	          }
 
-	              _this24._addChoice(choice.value, choice.label, isSelected, isDisabled, undefined, choice.customProperties, choice.placeholder);
-	            } else {
-	              _this24._addChoice(choice.value, choice.label, choice.selected, choice.disabled, undefined, choice.customProperties, choice.placeholder);
-	            }
-	          });
+	          this._addMultipleIndividualChoices(allChoices);
 	        }
 	      } else if (this.isTextElement) {
 	        // Add any preset values seperated by delimiter
