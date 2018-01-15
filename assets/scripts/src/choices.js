@@ -316,6 +316,7 @@ class Choices {
 
     // Clear data store
     this.clearStore();
+    this.presetChoices = [];
 
     // Nullify instance-specific data
     this.config.templates = null;
@@ -485,98 +486,103 @@ class Choices {
    * @private
    */
   render() {
-    this.currentState = this.store.getState();
+    if (!this._inMultipleStoreChanges) {
+      this.currentState = this.store.getState();
 
-    // Only render if our state has actually changed
-    if (this.currentState !== this.prevState) {
-      // Choices
-      if (
-        this.currentState.choices !== this.prevState.choices ||
-        this.currentState.groups !== this.prevState.groups ||
-        this.currentState.items !== this.prevState.items
-      ) {
-        if (this.isSelectElement) {
-          // Get active groups/choices
-          const activeGroups = this.store.getGroupsFilteredByActive();
-          const activeChoices = this.store.getChoicesFilteredByActive();
+      // Only render if our state has actually changed
+      if (this.currentState !== this.prevState) {
+        // Choices
+        if (
+          this.currentState.choices !== this.prevState.choices ||
+          this.currentState.groups !== this.prevState.groups ||
+          this.currentState.items !== this.prevState.items
+        ) {
+          if (this.isSelectElement) {
+            // Get active groups/choices
+            const activeGroups = this.store.getGroupsFilteredByActive();
+            const activeChoices = this.store.getChoicesFilteredByActive();
 
-          let choiceListFragment = document.createDocumentFragment();
+            let choiceListFragment = document.createDocumentFragment();
 
-          // Clear choices
-          this.choiceList.innerHTML = '';
+            // Clear choices
+            this.choiceList.innerHTML = '';
 
-          // Scroll back to top of choices list
-          if (this.config.resetScrollPosition) {
-            this.choiceList.scrollTop = 0;
+            // Scroll back to top of choices list
+            if (this.config.resetScrollPosition) {
+              this.choiceList.scrollTop = 0;
+            }
+
+            // If we have grouped options
+            if (activeGroups.length >= 1 && this.isSearching !== true) {
+              choiceListFragment = this.renderGroups(activeGroups, activeChoices, choiceListFragment);
+            } else if (activeChoices.length >= 1) {
+              choiceListFragment = this.renderChoices(activeChoices, choiceListFragment);
+            }
+
+            const activeItems = this.store.getItemsFilteredByActive();
+            const canAddItem = this._canAddItem(activeItems, this.input.value);
+
+            // If we have choices to show
+            if (choiceListFragment.childNodes && choiceListFragment.childNodes.length > 0) {
+              // ...and we can select them
+              if (canAddItem.response) {
+                // ...append them and highlight the first choice
+                this.choiceList.appendChild(choiceListFragment);
+                this._highlightChoice();
+              } else {
+                // ...otherwise show a notice
+                this.choiceList.appendChild(this._getTemplate('notice', canAddItem.notice));
+              }
+            } else {
+              // Otherwise show a notice
+              let dropdownItem;
+              let notice;
+
+              if (this.isSearching) {
+                notice = isType('Function', this.config.noResultsText) ?
+                  this.config.noResultsText() :
+                  this.config.noResultsText;
+
+                dropdownItem = this._getTemplate('notice', notice, 'no-results');
+              } else {
+                notice = isType('Function', this.config.noChoicesText) ?
+                  this.config.noChoicesText() :
+                  this.config.noChoicesText;
+
+                dropdownItem = this._getTemplate('notice', notice, 'no-choices');
+              }
+
+              this.choiceList.appendChild(dropdownItem);
+            }
           }
+        }
 
-          // If we have grouped options
-          if (activeGroups.length >= 1 && this.isSearching !== true) {
-            choiceListFragment = this.renderGroups(activeGroups, activeChoices, choiceListFragment);
-          } else if (activeChoices.length >= 1) {
-            choiceListFragment = this.renderChoices(activeChoices, choiceListFragment);
-          }
-
+        // Items
+        if (this.currentState.items !== this.prevState.items) {
+          // Get active items (items that can be selected)
           const activeItems = this.store.getItemsFilteredByActive();
-          const canAddItem = this._canAddItem(activeItems, this.input.value);
 
-          // If we have choices to show
-          if (choiceListFragment.childNodes && choiceListFragment.childNodes.length > 0) {
-            // ...and we can select them
-            if (canAddItem.response) {
-              // ...append them and highlight the first choice
-              this.choiceList.appendChild(choiceListFragment);
-              this._highlightChoice();
-            } else {
-              // ...otherwise show a notice
-              this.choiceList.appendChild(this._getTemplate('notice', canAddItem.notice));
+          // Clear list
+          this.itemList.innerHTML = '';
+
+          if (activeItems && activeItems) {
+            // Create a fragment to store our list items
+            // (so we don't have to update the DOM for each item)
+            const itemListFragment = this.renderItems(activeItems);
+
+            // If we have items to add
+            if (itemListFragment.childNodes) {
+              // Update list
+              this.itemList.appendChild(itemListFragment);
             }
-          } else {
-            // Otherwise show a notice
-            let dropdownItem;
-            let notice;
-
-            if (this.isSearching) {
-              notice = isType('Function', this.config.noResultsText) ?
-                this.config.noResultsText() :
-                this.config.noResultsText;
-
-              dropdownItem = this._getTemplate('notice', notice, 'no-results');
-            } else {
-              notice = isType('Function', this.config.noChoicesText) ?
-                this.config.noChoicesText() :
-                this.config.noChoicesText;
-
-              dropdownItem = this._getTemplate('notice', notice, 'no-choices');
-            }
-
-            this.choiceList.appendChild(dropdownItem);
           }
         }
+
+        this.prevState = this.currentState;
       }
-
-      // Items
-      if (this.currentState.items !== this.prevState.items) {
-        // Get active items (items that can be selected)
-        const activeItems = this.store.getItemsFilteredByActive();
-
-        // Clear list
-        this.itemList.innerHTML = '';
-
-        if (activeItems && activeItems) {
-          // Create a fragment to store our list items
-          // (so we don't have to update the DOM for each item)
-          const itemListFragment = this.renderItems(activeItems);
-
-          // If we have items to add
-          if (itemListFragment.childNodes) {
-            // Update list
-            this.itemList.appendChild(itemListFragment);
-          }
-        }
-      }
-
-      this.prevState = this.currentState;
+      this._storeNeedsRendering = false;
+    } else {
+      this._storeNeedsRendering = true;
     }
   }
 
@@ -876,6 +882,8 @@ class Choices {
       return this;
     }
 
+    this._startMultipleStoreChanges();
+
     // Convert args to an iterable array
     const values = [...args];
     const handleValue = (item) => {
@@ -927,6 +935,8 @@ class Choices {
       handleValue(values[0]);
     }
 
+    this._endMultipleStoreChanges();
+
     return this;
   }
 
@@ -940,6 +950,8 @@ class Choices {
     if (this.isTextElement) {
       return this;
     }
+
+    this._startMultipleStoreChanges();
 
     const choices = this.store.getChoices();
     // If only one value has been passed, convert to array
@@ -968,6 +980,9 @@ class Choices {
         console.warn('Attempting to select choice that does not exist');
       }
     });
+
+    this._endMultipleStoreChanges();
+
     return this;
   }
 
@@ -1054,6 +1069,30 @@ class Choices {
     });
 
     this.store.dispatch(toDispatch);
+  }
+
+  /**
+   * Starts a process in which multiple store changes are expected, to avoid rendering on each store change
+   * @return {Object} Class instance
+   * @private
+   */
+  _startMultipleStoreChanges() {
+    this._storeNeedsRendering = false;
+    this._inMultipleStoreChanges = true;
+    return this;
+  }
+
+  /**
+   * Ends a process in which multiple store changes are expected, will render if the store requires it
+   * @return {Object} Class instance
+   * @private
+   */
+  _endMultipleStoreChanges() {
+    this._inMultipleStoreChanges = false;
+    if (this._storeNeedsRendering) {
+      this.render();
+    }
+    return this;
   }
 
   /**
@@ -1286,6 +1325,8 @@ class Choices {
       return;
     }
 
+    this._startMultipleStoreChanges();
+
     // If we are clicking on an option
     const id = element.getAttribute('data-id');
     const choice = this.store.getChoiceById(id);
@@ -1317,6 +1358,8 @@ class Choices {
     }
 
     this.clearInput();
+
+    this._endMultipleStoreChanges();
 
     // We wont to close the dropdown if we are dealing with a single select box
     if (hasActiveDropdown && this.isSelectOneElement) {
@@ -2857,38 +2900,12 @@ class Choices {
         // Determine whether there is a selected choice
         const hasSelectedChoice = allChoices.some(choice => choice.selected);
 
-        // Add each choice
-        allChoices.forEach((choice, index) => {
-          // Pre-select first choice if it's a single select
-          if (this.isSelectOneElement) {
-            // If there is a selected choice already or the choice is not
-            // the first in the array, add each choice normally
-            // Otherwise pre-select the first choice in the array
-            const shouldPreselect = (!hasSelectedChoice || (hasSelectedChoice && index === 0));
-            const isSelected = shouldPreselect ? true : choice.selected;
-            const isDisabled = shouldPreselect ? false : choice.disabled;
+        if (this.isSelectOneElement && !!allChoices[0] && !hasSelectedChoice) {
+          allChoices[0].selected = true;
+          allChoices[0].disabled = false;
+        }
 
-            this._addChoice(
-              choice.value,
-              choice.label,
-              isSelected,
-              isDisabled,
-              undefined,
-              choice.customProperties,
-              choice.placeholder,
-            );
-          } else {
-            this._addChoice(
-              choice.value,
-              choice.label,
-              choice.selected,
-              choice.disabled,
-              undefined,
-              choice.customProperties,
-              choice.placeholder,
-            );
-          }
-        });
+        this._addMultipleIndividualChoices(allChoices);
       }
     } else if (this.isTextElement) {
       // Add any preset values seperated by delimiter
