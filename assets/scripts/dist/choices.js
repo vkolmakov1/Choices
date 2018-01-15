@@ -667,8 +667,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 
 	          this.prevState = this.currentState;
-	          this._storeNeedsRendering = false;
 	        }
+	        this._storeNeedsRendering = false;
 	      } else {
 	        this._storeNeedsRendering = true;
 	      }

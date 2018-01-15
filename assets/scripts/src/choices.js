@@ -486,7 +486,7 @@ class Choices {
    * @private
    */
   render() {
-    if (!this._inMultipleStoreChanges){
+    if (!this._inMultipleStoreChanges) {
       this.currentState = this.store.getState();
 
       // Only render if our state has actually changed
@@ -579,8 +579,8 @@ class Choices {
         }
 
         this.prevState = this.currentState;
-        this._storeNeedsRendering = false;
       }
+      this._storeNeedsRendering = false;
     } else {
       this._storeNeedsRendering = true;
     }
