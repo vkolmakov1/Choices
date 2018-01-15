@@ -254,6 +254,7 @@ export const wrap = function(element, wrapper) {
   } else {
     element.parentNode.appendChild(wrapper);
   }
+  element.parentNode.removeChild(element); // IE11 can sometimes throw a 'NoModificationAllowedError' if calling appendChild with an element that already has a parent. This makes sure the error doesn't happen. (https://github.com/webcomponents/webcomponentsjs/issues/856)
   return wrapper.appendChild(element);
 };
 
